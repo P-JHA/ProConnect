@@ -1,8 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import moongoose from 'mongoose';
-import postRoutes from './routes/postRoutes.js';
+import mongoose from "mongoose";
+import postRoutes from "./routes/posts.routes.js";
+import userRoutes from './routes/user.routes.js';
 
 dotenv.config();
 
@@ -11,15 +12,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use(postRoutes);
+app.use(userRoutes);
+
+app.use(express.static("uploads"))
+
 const start = async () => {
-    const connectDB = await moongoose.connect(process.env.MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
+  try {
+    await mongoose.connect(process.env.MONGO_URL);
+    console.log("MongoDB Connected");
+
+    app.listen(9090, () => {
+      console.log("Server is running on port 9090");
     });
-    app.listen(9080, () => {
-        console.log("Server is running on port 9080");
-    });
+  } catch (error) {
+    console.error("Database connection failed:");
+    console.error(error);
+  }
 };
 
+start();
 
 start();
