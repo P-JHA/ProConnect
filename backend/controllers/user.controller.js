@@ -191,6 +191,8 @@ export const downloadProfile = async (req, res) => {
 
         let outputPath = await convertUserDataToPDF(userProfile);
         return res.json({ "message": outputPath });
+    } catch (err) {
+        return res.status(500).json({ message: error.message })
     }
 }
 
@@ -245,25 +247,6 @@ export const getMyConnectionsRequests = async (req, res) => {
 };
 
 export const acceptConnectionRequest = async (req, res) => {
-    const { token, requestId } = req.body;
-
-    try {
-        const user = await User.findOne({ token: token });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        const connections = await connectionRequest.find({ connectionId: user._id })
-        .populate('userId', 'name username email profilePicture');
-
-        return res.status(200).json( connections );
-        
-    } catch (err) {
-        return res.status(500).json({ message: error.message });
-    }
-};
-
-export const acceptConnectionRequest = async (req, res) => {
     const { token, requestId, action_type } = req.body;
 
     try {
@@ -272,22 +255,51 @@ export const acceptConnectionRequest = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        
+
         const connection = await connectionRequest.findOne({ _id: requestId });
 
         if (!connection) {
             return res.status(404).json({ message: "Connection request not found" });
         }
-        
+
         if (action_type === "accept") {
-           connection.status_accepted = true;
-        }else{
+            connection.status_accepted = true;
+        } else {
             connection.status_accepted = false;
         }
 
         await connection.save();
         return res.status(200).json({ message: "Connection request updated successfully" });
-       
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+};
+
+export const commentPost = async (req, res) => { 
+
+    const { token, postId, comment } = req.body;
+
+    try {
+        const user = await User.findOne({ token: token }).select("_id");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const post = await Post.findById({ _id: postId });
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+
+        const newComment = {
+            userId: user._id,
+            comment: comment,
+            createdAt: new Date(),
+        };
+
+        post.comments.push(newComment);
+        await post.save();
+
+        return res.status(200).json({ message: "Comment added successfully", comment: newComment });
 
     } catch (err) {
         return res.status(500).json({ message: error.message });
