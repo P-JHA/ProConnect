@@ -89,7 +89,7 @@ export const login = async (req, res) => {
         const token = crypto.randomBytes(32).toString("hex");
 
         await User.updateOne({ _id: user._id }, { token });
-        return res.token(200).json({ message: "Login successful", token });
+        return res.status(200).json({ message: "Login successful", token });
     } catch (err) {
 
     }
@@ -107,7 +107,6 @@ export const uploadProfilePicture = async (req, res) => {
         user.profilePicture = req.file.filename;
         await user.save();
         return res.status(200).json({ message: "Profile picture uploaded successfully" });
-
 
 
     } catch (err) {
